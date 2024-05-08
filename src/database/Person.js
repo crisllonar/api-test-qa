@@ -4,9 +4,9 @@ const { saveToDatabase } = require("./utils");
 const getAllPersons = (queryParams) => {
     try {
         let persons = DB.person;
-        if(queryParams.lastName) {
+        if(queryParams.last_name) {
             return persons.filter((person) => 
-                person.lastName.toLowerCase().includes(queryParams.lastName.toLowerCase()))
+                person.last_name.toLowerCase().includes(queryParams.last_name.toLowerCase()))
         }
         return persons;
     } catch (error) {
@@ -75,8 +75,8 @@ const patchPerson = (personId, body) => {
         }
         const updatedPerson = {
             ...DB.person[personIndex],
-            ...body.firstName ? { firstName: body.firstName } : {},
-            ...body.lastName ? { lastName: body.lastName } : {},
+            ...body.first_name ? { first_name: body.first_name } : {},
+            ...body.last_name ? { last_name: body.last_name } : {},
             ...body.phones ? { phones: body.phones } : {},
             ...body.addresses ? { addresses: body.addresses } : {},
             updatedAt: new Date().toLocaleString("en-US", { timeZone: "UTC" }),

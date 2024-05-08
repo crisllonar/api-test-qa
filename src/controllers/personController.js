@@ -38,8 +38,8 @@ const createNewPerson = (req, res) => {
     const { body } = req;
     if(
         !body.email ||
-        !body.firstName ||
-        !body.lastName ||
+        !body.first_name ||
+        !body.last_name ||
         !body.phones ||
         !body.addresses
     ) {
@@ -47,15 +47,15 @@ const createNewPerson = (req, res) => {
         .status(400)
         .send({
             error:
-            "One of the following keys is missing or is empty in request body: 'firstName', 'lastName', 'email', 'phones', 'addresses'",
+            "One of the following keys is missing or is empty in request body: 'first_name', 'last_name', 'email', 'phones', 'addresses'",
         });
         return;
     };
 
     const newPerson = {
         email: body.email,
-        firstName: body.firstName,
-        lastName: body.lastName,
+        first_name: body.first_name,
+        last_name: body.last_name,
         phones: body.phones,
         addresses: body.addresses
     };
