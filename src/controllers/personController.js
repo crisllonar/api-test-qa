@@ -1,18 +1,18 @@
 const personService = require('../services/personService');
 
 
-const getAllPersons = (req, res) => {
+const getAllPersons  = async (req, res) => {
     try {
-        const allPerson = personService.getAllPersons(req.query);
+        const allPerson = await personService.getAllPersons(req.query);
         res.status(200).send(allPerson);
     } catch (error) {
         res
-        .status(error?.status || 500)
-        .send({ error: error?.message || error });
+            .status(error?.status || 500)
+            .send({error: error?.message || error});
     }
 }
 
-const getPersonById = (req, res) => {
+const getPersonById = async (req, res) => {
     const {
         params: { personId },
     } = req;
@@ -25,7 +25,7 @@ const getPersonById = (req, res) => {
         });
     }
     try {
-        const person = personService.getPersonById(personId);
+        const person = await personService.getPersonById(personId);
         res.status(200).send(person);
     } catch (error) {
         res
@@ -34,12 +34,12 @@ const getPersonById = (req, res) => {
     }
 }
 
-const createNewPerson = (req, res) => {
+const createNewPerson = async (req, res) => {
     const { body } = req;
     if(
         !body.email ||
-        !body.first_name ||
-        !body.last_name ||
+        !body.firstName ||
+        !body.lastName ||
         !body.phones ||
         !body.addresses
     ) {
@@ -54,14 +54,14 @@ const createNewPerson = (req, res) => {
 
     const newPerson = {
         email: body.email,
-        first_name: body.first_name,
-        last_name: body.last_name,
+        first_name: body.firstName,
+        last_name: body.lastName,
         phones: body.phones,
         addresses: body.addresses
     };
     try {
-        const createdPerson = personService.createPerson(newPerson);
-        res.status(201).send(createdPerson);
+        const createdPersonId = await personService.createPerson(newPerson);
+        res.status(201).json({ id: createdPersonId });
     } catch (error) {
         res
         .status(error?.status || 500)
