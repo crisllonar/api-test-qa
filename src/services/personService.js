@@ -26,10 +26,9 @@ const createPerson = async (newPerson) => {
     } 
 }   
 
-const patchPerson = (personId, body) => {
+const patchPerson = async (personId, body) => {
     try {
-        const updatedPerson = Person.patchPerson(personId, body);
-        return updatedPerson;
+        return await Person.patchPerson(personId, body);
     } catch (error) {
         throw error;
     } 

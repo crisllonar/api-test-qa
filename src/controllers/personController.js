@@ -50,8 +50,7 @@ const createNewPerson = async (req, res) => {
             "One of the following keys is missing or is empty in request body: 'first_name', 'last_name', 'email', 'phones', 'addresses'",
         });
         return;
-    };
-
+    }
     const newPerson = {
         email: body.email,
         first_name: body.firstName,
@@ -70,11 +69,12 @@ const createNewPerson = async (req, res) => {
    
 }
 
-const patchPerson = (req, res) => {
+const patchPerson = async (req, res) => {
     const {
         body,
         params: { personId },
     } = req;
+
     if(!personId) {
         res
         .status(400)
@@ -86,9 +86,16 @@ const patchPerson = (req, res) => {
         });
         return;
     }
+    if (Object.keys(body).length === 0) {
+        throw {
+            status: 400,
+            message: 'Update failed. Request body is empty.',
+        };
+    }
+
     try {
-        const updatedPerson = personService.patchPerson(personId, body);
-        res.status(200).send(updatedPerson);
+        await personService.patchPerson(personId, body);
+        res.status(204).send();
     } catch (error) {
         res
         .status(error?.status || 500)

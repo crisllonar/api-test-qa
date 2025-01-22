@@ -64,11 +64,10 @@ const createNewPerson = async (newPerson) => {
     let {rows} = await pool.query(verifyPersonQuery, [newPerson.email]);
     if (rows.length > 0) {
         throw {
-            status: 400,
+            status: 409,
             message: `Person with the email: '${newPerson.email}' already exists`,
         };
     }
-    console.log(rows.length)
 
     try {
         const query = `
@@ -89,33 +88,22 @@ const createNewPerson = async (newPerson) => {
     };
 };
 
-const patchPerson = (personId, body) => {
-    if (Object.keys(body).length === 0) {
-        throw {
-            status: 400,
-            message: 'Update failed. Request body is empty.',
-        };
-    }
+const patchPerson = async (personId, body) => {
+
+    const last_name = body.lastName ? body.lastName : null;
+    const first_name = body.firstName ? body.firstName : null;
+    const phones = body.phones ? body.phones : null;
+    const addresses = body.addresses ? body.addresses : null;
 
     try {
-        const personIndex = DB.person.findIndex((person) => person.id === personId);
-        if(personIndex === -1) {
-            throw {
-                status: 400,
-                message: `Can't find person with the id '${personId}'`,
-            };
-        }
-        const updatedPerson = {
-            ...DB.person[personIndex],
-            ...body.first_name ? { first_name: body.first_name } : {},
-            ...body.last_name ? { last_name: body.last_name } : {},
-            ...body.phones ? { phones: body.phones } : {},
-            ...body.addresses ? { addresses: body.addresses } : {},
-            updatedAt: new Date().toLocaleString("en-US", { timeZone: "UTC" }),
-        };
-        DB.person[personIndex] = updatedPerson;
-        saveToDatabase(DB);
-        return updatedPerson;
+        const query = 'UPDATE persons SET ' +
+            'first_name = COALESCE($2,first_name), ' +
+            'last_name = COALESCE ($3,last_name), ' +
+            'phones = COALESCE($4,phones), ' +
+            'addresses = COALESCE($5,addresses) ' +
+            'WHERE id = $1;';
+        const result = await pool.query(query, [personId, first_name, last_name, phones, addresses]);
+        return result.rowCount
     } catch (error) {
         if (error.status === 400) {
             throw { status: 400, message: error };
