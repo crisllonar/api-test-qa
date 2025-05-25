@@ -40,14 +40,14 @@ const createNewPerson = async (req, res) => {
         !body.email ||
         !body.firstName ||
         !body.lastName ||
-        !body.phones ||
-        !body.addresses
+        !body.phone ||
+        !body.address
     ) {
         res
         .status(400)
         .send({
             error:
-            "One of the following keys is missing or is empty in request body: 'first_name', 'last_name', 'email', 'phones', 'addresses'",
+            "One of the following keys is missing or is empty in request body: 'first_name', 'last_name', 'email', 'phone', 'addresses'",
         });
         return;
     }
@@ -55,8 +55,8 @@ const createNewPerson = async (req, res) => {
         email: body.email,
         first_name: body.firstName,
         last_name: body.lastName,
-        phones: body.phones,
-        addresses: body.addresses
+        phone: body.phone,
+        address: body.address
     };
     try {
         const createdPersonId = await personService.createPerson(newPerson);
@@ -103,7 +103,7 @@ const patchPerson = async (req, res) => {
     }
 }
 
-const deletePerson = (req, res) => {
+const deletePerson = async (req, res) => {
     const {
         params: { personId },
     } = req;
@@ -119,7 +119,7 @@ const deletePerson = (req, res) => {
         return;
     }
     try {
-        personService.deletePerson(personId);
+        await personService.deletePerson(personId);
         res.status(204).send({status:"OK"});
     } catch (error) {
         res

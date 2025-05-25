@@ -34,9 +34,9 @@ const patchPerson = async (personId, body) => {
     } 
 }
 
-const deletePerson = (personId) => {
+const deletePerson = async (personId) => {
     try {
-        Person.deletePerson(personId);
+        return await Person.deletePerson(personId);
     } catch (error) {
         throw error;
     }
