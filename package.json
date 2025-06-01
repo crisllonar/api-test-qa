@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "start:docker": "docker-compose up -d",
+    "start": "nodemon src/index.js",
+    "start:full": "npm run start:docker && npm run start",
     "test": "nodemon run src/index.js"
   },
   "keywords": [],

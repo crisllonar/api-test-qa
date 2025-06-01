@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  mypgserver:
+    image: postgres:latest
+    container_name: mypgserver
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "${DB_PORT}:5432"
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql

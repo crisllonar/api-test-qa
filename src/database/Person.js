@@ -1,6 +1,4 @@
-const DB = require('./db.json');
 const { v4: uuid } = require('uuid');
-const {saveToDatabase} = require("./utils");
 const {Pool} = require('pg');
 const constants = require("../config/constants");
 
