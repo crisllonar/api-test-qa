@@ -1,113 +1,135 @@
-const DB = require('./db.json');
-const { saveToDatabase } = require("./utils");
+const { v4: uuid } = require('uuid');
+const {Pool} = require('pg');
+const constants = require("../config/constants");
 
-const getAllPersons = (queryParams) => {
+const pool = new Pool({
+    user: constants.user,
+    host: constants.host,
+    database: constants.database,
+    password: constants.password,
+    port: constants.port
+});
+
+
+const getAllPersons = async (queryParams) => {
     try {
-        let persons = DB.person;
-        if(queryParams.last_name) {
-            return persons.filter((person) => 
-                person.last_name.toLowerCase().includes(queryParams.last_name.toLowerCase()))
+        const {email, lastName} = queryParams;
+
+        if (email && lastName) {
+            const query = 'SELECT id, email, first_name, last_name, phone, address, created_at, modified_at FROM persons WHERE active = true AND email = $1 AND last_name = $2;';
+            const {rows} = await pool.query(query, [email, lastName]);
+            return rows;
+        } else if (email && !lastName) {
+            const query = 'SELECT id, email, first_name, last_name, phone, address, created_at, modified_at FROM persons WHERE active = true AND email = $1;';
+            const {rows} = await pool.query(query, [email]);
+            return rows;
+        } else if (!email && lastName) {
+            const query = 'SELECT id, email, first_name, last_name, phone, address, created_at, modified_at FROM persons WHERE active = true AND last_name = $1;';
+            const {rows} = await pool.query(query, [lastName]);
+            return rows;
+        } else {
+            const query = 'SELECT id, email, first_name, last_name, phone, address, created_at, modified_at FROM persons where active = true ';
+            const {rows} = await pool.query(query);
+            return rows;
         }
-        return persons;
     } catch (error) {
         if (error.status === 400) {
-            if (error.status === 400) {
-                throw { status: 400, message: error };
-            }
+            throw {status: 400, message: error};
         }
-        throw { status: 500, message: error?.message || error };
+        throw {status: 500, message: error?.message || error};
     }
 };
 
-const getPersonById = (personId) => {
+const getPersonById = async (personId) => {
     try {
-    const person = DB.person.find((person) => person.id === personId);
-    if (!person) {
-        throw {
-            status: 400,
-            message: `Can't find person with the id '${personId}'`,
-          };
-    }
-    return person;
+        const query = 'SELECT id, email, first_name, last_name, phone, address, created_at, modified_at FROM persons WHERE active = true AND id = $1;';
+        const {rows} = await pool.query(query, [personId]);
+        if (rows.length === 0) {
+            throw {status: 404, message: `Person not found with the id '${personId}'`};
+        } else {
+            return rows;
+        }
     } catch (error) {
         if (error.status === 400) {
-            throw { status: 400, message: error };
+            throw {status: 400, message: error};
         }
-        throw { status: 500, message: error?.message || error };
+        throw {status: 500, message: error?.message || error};
     }
 };
 
-const createNewPerson =(newPerson) => {
-    const isAlreadyExist = DB.person.find((person) => person.email === newPerson.email);
-    if(isAlreadyExist) {
+const createNewPerson = async (newPerson) => {
+
+    const verifyPersonQuery = 'SELECT email FROM persons WHERE active = true AND email = $1;';
+    let {rows} = await pool.query(verifyPersonQuery, [newPerson.email]);
+    if (rows.length > 0) {
         throw {
-            status: 400,
+            status: 409,
             message: `Person with the email: '${newPerson.email}' already exists`,
-          };
+        };
     }
+
     try {
-        DB.person.push(newPerson);
-        saveToDatabase(DB);
-        return newPerson;
+        const query = `
+            INSERT INTO persons (id, email, first_name, last_name, phone, address, created_at, active)
+            VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP, true) RETURNING id;
+        `;
+        const id = uuid();
+        const values = [id, newPerson.email, newPerson.first_name, newPerson.last_name, newPerson.phone, newPerson.address];
+
+        const result = await pool.query(query, values);
+        return result.rows[0].id;
     } catch (error) {
         if (error.status === 400) {
-            throw { status: 400, message: error };
+            throw {status: 400, message: error};
         }
-        throw { status: 500, message: error?.message || error };
-    };
+        throw {status: 500, message: error?.message || error};
+    }
 };
 
-const patchPerson = (personId, body) => {
-    if (Object.keys(body).length === 0) {
-        throw {
-            status: 400,
-            message: 'Update failed. Request body is empty.',
-        };
-    }
+const patchPerson = async (personId, body) => {
+
+    const last_name = body.lastName ? body.lastName : null;
+    const first_name = body.firstName ? body.firstName : null;
+    const phone = body.phone ? body.phone : null;
+    const address = body.address ? body.address : null;
 
     try {
-        const personIndex = DB.person.findIndex((person) => person.id === personId);
-        if(personIndex === -1) {
-            throw {
-                status: 400,
-                message: `Can't find person with the id '${personId}'`,
-            };
-        }
-        const updatedPerson = {
-            ...DB.person[personIndex],
-            ...body.first_name ? { first_name: body.first_name } : {},
-            ...body.last_name ? { last_name: body.last_name } : {},
-            ...body.phones ? { phones: body.phones } : {},
-            ...body.addresses ? { addresses: body.addresses } : {},
-            updatedAt: new Date().toLocaleString("en-US", { timeZone: "UTC" }),
-        };
-        DB.person[personIndex] = updatedPerson;
-        saveToDatabase(DB);
-        return updatedPerson;
+        const query = 'UPDATE persons SET ' +
+            'first_name = COALESCE($2,first_name), ' +
+            'last_name = COALESCE ($3,last_name), ' +
+            'phone = COALESCE($4,phone), ' +
+            'address = COALESCE($5,address), ' +
+            'modified_at = CURRENT_TIMESTAMP ' +
+            'WHERE active = true AND id = $1; ';
+        const result = await pool.query(query, [personId, first_name, last_name, phone, address]);
+        return result.rowCount
     } catch (error) {
         if (error.status === 400) {
-            throw { status: 400, message: error };
+            throw {status: 400, message: error};
         }
-        throw { status: 500, message: error?.message || error };
+        throw {status: 500, message: error?.message || error};
     }
 }
 
-const deletePerson = (personId) => {
+const deletePerson = async (personId) => {
     try {
-        const personIndex = DB.person.findIndex((person) => person.id === personId);
-        if(personIndex === -1) {
+        const verifyPersonQuery = 'SELECT id FROM persons WHERE active = true AND id = $1;';
+        let {rows} = await pool.query(verifyPersonQuery, [personId]);
+        if (rows.length === 0) {
             throw {
-                status: 400,
+                status: 404,
                 message: `Can't find person with the id '${personId}'`,
             };
         }
-        DB.person.splice(personIndex, 1);
-        saveToDatabase(DB);
+
+        const query = 'UPDATE persons SET active = false, modified_at = CURRENT_TIMESTAMP WHERE id = $1;';
+        const result = await pool.query(query, [personId]);
+        return result.rowCount
     } catch (error) {
         if (error.status === 400) {
-            throw { status: 400, message: error };
+            throw {status: 400, message: error};
         }
-        throw { status: 500, message: error?.message || error };
+        throw {status: 500, message: error?.message || error};
     }
 }
 

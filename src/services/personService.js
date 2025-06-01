@@ -2,51 +2,41 @@ const Person = require('../database/person');
 const { v4: uuid } = require("uuid");
 
 
-const getAllPersons = (queryParams) => {
+const getAllPersons = async (queryParams) => {
     try {
-        const allPerson = Person.getAllPersons(queryParams);
-        return allPerson;
+        return await Person.getAllPersons(queryParams);
     } catch (error) {
         throw error;
     }
 }
 
-const getPersonById = (personId) => {
+const getPersonById = async (personId) => {
     try {
-        const person = Person.getPersonById(personId);
-        return person;
+        return await Person.getPersonById(personId);
     } catch (error) {
         throw error;
     }
 }
 
-const createPerson = (newPerson) => {
-    const personToInsert = {
-      id: uuid(),
-      ...newPerson,
-      createdAt: new Date().toLocaleString("en-US", { timeZone: "UTC" }),
-      updatedAt: new Date().toLocaleString("en-US", { timeZone: "UTC" }),
-    };
+const createPerson = async (newPerson) => {
     try {
-        const createdPerson = Person.createNewPerson(personToInsert);
-        return createdPerson;
+        return await Person.createNewPerson(newPerson);
     } catch (error) {
         throw error;
     } 
 }   
 
-const patchPerson = (personId, body) => {
+const patchPerson = async (personId, body) => {
     try {
-        const updatedPerson = Person.patchPerson(personId, body);
-        return updatedPerson;
+        return await Person.patchPerson(personId, body);
     } catch (error) {
         throw error;
     } 
 }
 
-const deletePerson = (personId) => {
+const deletePerson = async (personId) => {
     try {
-        Person.deletePerson(personId);
+        return await Person.deletePerson(personId);
     } catch (error) {
         throw error;
     }

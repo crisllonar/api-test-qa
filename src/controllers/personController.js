@@ -1,18 +1,18 @@
 const personService = require('../services/personService');
 
 
-const getAllPersons = (req, res) => {
+const getAllPersons  = async (req, res) => {
     try {
-        const allPerson = personService.getAllPersons(req.query);
+        const allPerson = await personService.getAllPersons(req.query);
         res.status(200).send(allPerson);
     } catch (error) {
         res
-        .status(error?.status || 500)
-        .send({ error: error?.message || error });
+            .status(error?.status || 500)
+            .send({error: error?.message || error});
     }
 }
 
-const getPersonById = (req, res) => {
+const getPersonById = async (req, res) => {
     const {
         params: { personId },
     } = req;
@@ -25,7 +25,7 @@ const getPersonById = (req, res) => {
         });
     }
     try {
-        const person = personService.getPersonById(personId);
+        const person = await personService.getPersonById(personId);
         res.status(200).send(person);
     } catch (error) {
         res
@@ -34,34 +34,33 @@ const getPersonById = (req, res) => {
     }
 }
 
-const createNewPerson = (req, res) => {
+const createNewPerson = async (req, res) => {
     const { body } = req;
     if(
         !body.email ||
-        !body.first_name ||
-        !body.last_name ||
-        !body.phones ||
-        !body.addresses
+        !body.firstName ||
+        !body.lastName ||
+        !body.phone ||
+        !body.address
     ) {
         res
         .status(400)
         .send({
             error:
-            "One of the following keys is missing or is empty in request body: 'first_name', 'last_name', 'email', 'phones', 'addresses'",
+            "One of the following keys is missing or is empty in request body: 'first_name', 'last_name', 'email', 'phone', 'addresses'",
         });
         return;
-    };
-
+    }
     const newPerson = {
         email: body.email,
-        first_name: body.first_name,
-        last_name: body.last_name,
-        phones: body.phones,
-        addresses: body.addresses
+        first_name: body.firstName,
+        last_name: body.lastName,
+        phone: body.phone,
+        address: body.address
     };
     try {
-        const createdPerson = personService.createPerson(newPerson);
-        res.status(201).send(createdPerson);
+        const createdPersonId = await personService.createPerson(newPerson);
+        res.status(201).json({ id: createdPersonId });
     } catch (error) {
         res
         .status(error?.status || 500)
@@ -70,11 +69,12 @@ const createNewPerson = (req, res) => {
    
 }
 
-const patchPerson = (req, res) => {
+const patchPerson = async (req, res) => {
     const {
         body,
         params: { personId },
     } = req;
+
     if(!personId) {
         res
         .status(400)
@@ -86,9 +86,16 @@ const patchPerson = (req, res) => {
         });
         return;
     }
+    if (Object.keys(body).length === 0) {
+        throw {
+            status: 400,
+            message: 'Update failed. Request body is empty.',
+        };
+    }
+
     try {
-        const updatedPerson = personService.patchPerson(personId, body);
-        res.status(200).send(updatedPerson);
+        await personService.patchPerson(personId, body);
+        res.status(204).send();
     } catch (error) {
         res
         .status(error?.status || 500)
@@ -96,7 +103,7 @@ const patchPerson = (req, res) => {
     }
 }
 
-const deletePerson = (req, res) => {
+const deletePerson = async (req, res) => {
     const {
         params: { personId },
     } = req;
@@ -112,7 +119,7 @@ const deletePerson = (req, res) => {
         return;
     }
     try {
-        personService.deletePerson(personId);
+        await personService.deletePerson(personId);
         res.status(204).send({status:"OK"});
     } catch (error) {
         res

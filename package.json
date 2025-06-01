@@ -3,6 +3,9 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "start:docker": "docker-compose up -d",
+    "start": "nodemon src/index.js",
+    "start:full": "npm run start:docker && npm run start",
     "test": "nodemon run src/index.js"
   },
   "keywords": [],
@@ -11,6 +14,7 @@
   "description": "",
   "dependencies": {
     "body-parser": "1.20.3",
+    "dotenv": "16.4.7",
     "express": "5.0.1",
     "pg": "8.13.1",
     "uuid": "9.0.1"
